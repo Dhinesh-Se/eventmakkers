@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Event</title>
+   
+</head>
+
+<body>
+    <header>
+        <h1>Create New Event</h1>
+    </header>
+    <div class="container">
+        <form id="createEventForm">
+            <div>
+                <label for="name">Event Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div>
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" required>
+            </div>
+            <div>
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            <div>
+                <label for="organizerName">Organizer Name:</label>
+                <input type="text" id="organizerName" name="organizer.name" required>
+            </div>
+            <div>
+                <label for="organizerWebsite">Organizer Website:</label>
+                <input type="text" id="organizerWebsite" name="organizer.website">
+            </div>
+            <div>
+                <label for="imageUrl">Image URL:</label>
+                <input type="text" id="imageUrl" name="imageUrl" required>
+            </div>
+            <div>
+                <label for="tags">Tags (comma-separated):</label>
+                <input type="text" id="tags" name="tags">
+            </div>
+            <div>
+                <label for="tickets">Tickets:</label>
+                <div>
+                    <div>
+                        <label for="ticketType">Type:</label>
+                        <select id="ticketType">
+                            <option value="regular">Regular</option>
+                            <option value="vip">VIP</option>
+                            <option value="premium">Premium</option>
+                            <!-- Add more options as needed -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="ticketPrice">Price:</label>
+                        <input type="number" id="ticketPrice" name="tickets.price" step="0.01" required>
+                    </div>
+                </div>
+                <button type="submit">Create Event</button>
+        </form>
+    </div>
+    <!-- ... Other HTML code ... -->
+
+    <script>
+        // JavaScript code for the Create Event page (create_event.html) goes here
+
+        // Function to create a new event
+        const createEvent = async (formData) => {
+            try {
+                const token = localStorage.getItem('userToken'); // Retrieve the token from local storage
+                const response = await fetch('/api/v1/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`, // Add your token here
+                        // Add any additional headers here
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Request failed.');
+                }
+
+                const responseData = await response.json();
+                const newEvent = responseData.data;
+                console.log('Event created:', newEvent);
+                window.location.href = 'event.html'
+                // Handle successful event creation (e.g., show success message to the user)
+            } catch (error) {
+                console.error('Error:', error.message);
+                // Handle error (e.g., show error message to the user)
+            }
+        };
+
+        // Function to handle form submission for creating events
+        const handleEventCreation = async (event) => {
+            event.preventDefault();
+            const form = event.target;
+
+            const formData = {
+                name: form.elements.name.value,
+                date: form.elements.date.value,
+                address: form.elements.address.value,
+                description: form.elements.description.value,
+                organizer: {
+                    name: form.elements['organizerName'].value,
+                    website: form.elements['organizerWebsite'].value,
+                },
+                imageUrl: form.elements.imageUrl.value,
+                tags: form.elements.tags.value.split(',').map((tag) => tag.trim()),
+                tickets: {
+                    type: form.elements.ticketType.value, // Select the ticket type
+                    price: parseFloat(form.elements.ticketPrice.value), // Parse ticket price as a float
+                },
+                // Add any other event fields as needed
+            };
+
+            try {
+                await createEvent(formData);
+                form.reset(); // Reset the form after successful creation
+            } catch (error) {
+                console.error('Error:', error.message);
+                // Handle error (e.g., show error message to the user)
+            }
+        };
+        // Function to initialize the Create Event page
+        const initCreateEventPage = () => {
+            // Add event listener to the create event form
+            const createEventForm = document.getElementById('createEventForm');
+            createEventForm.addEventListener('submit', handleEventCreation);
+        };
+
+        // Call the initialization function when the page loads
+        window.addEventListener('load', initCreateEventPage);
+    </script>
+</body>
+
+</html>

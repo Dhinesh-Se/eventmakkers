@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Event Booking App</title>
+    <link rel="stylesheet" href="event.css">
+</head>
+
+<body>
+    <header>
+        <h1>Event Booking App</h1>
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search by location or tags">
+        <button onclick="">Search</button>
+        <a href="create_event.html">Create New Event</a>
+        <a href="order.html">Order</a>
+
+    </header>
+
+    <div class="container">
+        <!-- Sidebar with filter form -->
+        <div class="sidebar">
+            <h3>Filter Options</h3>
+            <label for="priceFilter">Price:</label>
+            <input type="number" id="priceFilter">
+
+            <label for="dateFilter">Date:</label>
+            <input type="date" id="dateFilter">
+
+            <label for="eventFilter">Event:</label>
+            <input type="text" id="eventFilter">
+
+            <button onclick="applyFilters()">Apply Filters</button>
+        </div>
+        <!-- Main content with events -->
+        <div class="main-content">
+            <!-- Event List -->
+            <div id="eventList">
+                <!-- Events will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating form for event update -->
+    <div class="floating-form" id="updateForm">
+        <!-- The dynamically generated update form will be displayed here -->
+        <div id="updateFormContent"></div>
+        <button onclick="hideUpdateForm()">Cancel</button>
+    </div>
+
+    <!-- Script for handling API calls and event handling -->
+    <script>
+        const API_ENDPOINT = "/api/v1";
+        // Function to fetch user information
+        function fetchUserInformation() {
+            const userToken = localStorage.getItem("userToken");
+
+            fetch(`${API_ENDPOINT}/account/user`, {
+                headers: {
+                    "Authorization": `Bearer ${userToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const user = data.data;
+                    // Update the header with user information
+                    const header = document.querySelector("header");
+                    header.innerHTML += `<p>Welcome, ${user.name}! (Email: ${user.email})</p>`;
+                })
+                .catch(error => {
+                    console.error("Error fetching user information:", error);
+                });
+        }
+
+        // Call the function to fetch user information
+        fetchUserInformation();
+
+        function formatTickets(tickets) {
+            return `Type: ${tickets.type}, Price: $${tickets.price.toFixed(2)}`;
+        }
+        function createEventCard(event) {
+            const eventCard = document.createElement("div");
+            eventCard.classList.add("event-card");
+
+            eventCard.innerHTML = `
+        <h3>${event.name}</h3>
+        <p>Date: ${event.date}</p>
+        <p>Location: ${event.address}</p>
+        <p>Description: ${event.description}</p>
+        <p>Organizer: ${event.organizer.name} (${event.organizer.website})</p>
+        <img src="${event.imageUrl}" alt="Event Image">
+        <p>Tags: ${event.tags.join(', ')}</p>
+        <p>Tickets: ${formatTickets(event.tickets)}</p>
+        <button onclick="deleteEvent('${event._id}')">Delete</button>
+        <button onclick="showUpdateForm('${event._id}')">Update</button>
+        <button onclick="toggleLike('${event._id}')">
+            ${localStorage.getItem(`likedEvent_${event._id}`) === "true" ? "Unlike" : "Like"}
+        </button>
+    `;
+            return eventCard;
+        }
+        // Function to fetch events from the API
+        function fethEvent(page) {
+            const userToken = localStorage.getItem("userToken");
+            const limit = 5; // Set the number of events to display per page
+
+            fetch(`${API_ENDPOINT}/events?page=${page}&limit=${limit}`, {
+                headers: {
+                    "Authorization": `Bearer ${userToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response and update the eventList div with the events
+                    const eventListDiv = document.getElementById("eventList");
+                    eventListDiv.innerHTML = ""; // Clear previous content
+                    data.data.forEach(event => {
+                        const eventCard = createEventCard(event);
+                        eventListDiv.appendChild(eventCard);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching events:", error);
+                });
+        }
+
+        // Function to fetch events with filters from the API
+        function fetchFilteredEvents() {
+            const userToken = localStorage.getItem("userToken");
+            const priceFilter = document.getElementById("priceFilter").value;
+            const dateFilter = document.getElementById("dateFilter").value;
+            const eventFilter = document.getElementById("eventFilter").value;
+
+            // Build the filter query string
+            let filterQuery = "";
+            if (priceFilter) {
+                filterQuery += `&price=${priceFilter}`;
+            }
+            if (dateFilter) {
+                filterQuery += `&date=${dateFilter}`;
+            }
+            if (eventFilter) {
+                filterQuery += `&filter=${eventFilter}`;
+            }
+
+            fetch(`${API_ENDPOINT}/events?${filterQuery}`, {
+                headers: {
+                    "Authorization": `Bearer ${userToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const eventListDiv = document.getElementById("eventList");
+                    eventListDiv.innerHTML = ""; // Clear previous content
+
+                    data.data.forEach(event => {
+                        const eventCard = createEventCard(event);
+                        eventListDiv.appendChild(eventCard);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching filtered events:", error);
+                });
+        }
+        function toggleLike(eventId) {
+            const likedEventKey = `likedEvent_${eventId}`;
+            const isLiked = localStorage.getItem(likedEventKey) === "true";
+            if (isLiked) {
+                localStorage.removeItem(likedEventKey);
+            } else {
+                localStorage.setItem(likedEventKey, "true");
+            }
+
+            // Update the like button text
+            const likeButton = document.querySelector(`[onclick="toggleLike('${eventId}')"]`);
+            likeButton.textContent = isLiked ? "Like" : "Unlike";
+        }
+
+        // Function to handle filter button click
+        function applyFilters() {
+            fetchFilteredEvents();
+        }
+
+        // Function to delete an event
+        function deleteEvent(eventId) {
+            const userToken = localStorage.getItem("userToken");
+
+            fetch(`${API_ENDPOINT}/events/${eventId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${userToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response and fetch updated events
+                    fethEvent(1);
+                })
+                .catch(error => {
+                    console.error("Error deleting event:", error);
+                });
+        }
+        function showUpdateForm(eventId) {
+            // Get the event details for the provided eventId using the API
+            const userToken = localStorage.getItem("userToken");
+
+            fetch(`${API_ENDPOINT}/events/${eventId}`, {
+                headers: {
+                    "Authorization": `Bearer ${userToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const event = data.data;
+
+                    // Create the update form elements and pre-fill them with the event details
+                    const updateFormContent = document.getElementById("updateFormContent");
+                    updateFormContent.innerHTML = `
+                <form onsubmit="updateEvent('${eventId}'); return false;">
+                    <h3>Update Event</h3>
+                    <label for="eventName">Event Name:</label>
+                    <input type="text" id="eventName" value="${event.name}">
+                    
+                    <label for="eventLocation">Event Location:</label>
+                    <input type="text" id="eventLocation" value="${event.address}">
+                    
+                    <label for="eventDate">Event Date:</label>
+                    <input type="date" id="eventDate" value="${event.date.substring(0, 10)}">
+                    
+                    <div>
+          <label for="ticketType">Ticket Type:</label>
+          <select id="ticketType" name="tickets.type">
+            <option value="regular" ${event.tickets.type === "regular" ? "selected" : ""}>Regular</option>
+            <option value="vip" ${event.tickets.type === "vip" ? "selected" : ""}>VIP</option>
+            <option value="premium" ${event.tickets.type === "premium" ? "selected" : ""}>Premium</option>
+            <!-- Add more options as needed -->
+          </select>
+        </div>
+
+        <div>
+          <label for="ticketPrice">Ticket Price:</label>
+          <input type="number" id="ticketPrice" name="tickets.price" step="0.01" value="${event.tickets.price}" required>
+        </div>
+                    
+                    <!-- Add more input fields for other event details if needed -->
+                    
+                    <button type="submit">Update Event</button>
+                </form>
+            `;
+
+                    // Show the floating form
+                    const updateFormDiv = document.getElementById("updateForm");
+                    updateFormDiv.style.display = "block";
+                })
+                .catch(error => {
+                    console.error("Error fetching event details for update:", error);
+                });
+        }
+
+        // Function to hide the update form
+        function hideUpdateForm() {
+            const updateFormDiv = document.getElementById("updateForm");
+            updateFormDiv.style.display = "none";
+        }
+
+        // Function to update an event
+        function updateEvent(eventId) {
+            // Get the updated event details from the form fields
+            const updatedEventData = {
+                name: document.getElementById("eventName").value,
+                address: document.getElementById("eventLocation").value,
+                date: document.getElementById("eventDate").value,
+                tickets: {
+                    type: document.getElementById("ticketType").value,
+                    price: parseFloat(document.getElementById("ticketPrice").value)
+                },
+                // Add more properties for other event details if needed
+            };
+
+            // Call the updateEvent function with the updated event data
+            const userToken = localStorage.getItem("userToken");
+
+            fetch(`${API_ENDPOINT}/events/${eventId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`
+                },
+                body: JSON.stringify(updatedEventData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response and fetch updated events
+                    fethEvent(1);
+                    hideUpdateForm(); // Hide the update form after the event is updated
+                })
+                .catch(error => {
+                    console.error("Error updating event:", error);
+                });
+        }
+        fethEvent(1);
+    </script>
+</body>
+
+</html>

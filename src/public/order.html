@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Creation</title>
+</head>
+<body>
+    <h1>Create Order</h1>
+    <form id="orderForm">
+        <!-- Input fields for event details -->
+        <label for="eventName">Event Name:</label>
+        <input type="text" id="eventName" required>
+
+        <label for="organizer">Organizer:</label>
+        <input type="text" id="organizer" required>
+
+        <label for="eventDate">Event Date:</label>
+        <input type="date" id="eventDate" required>
+
+        <label for="eventAddress">Event Address:</label>
+        <input type="text" id="eventAddress" required>
+
+        <label for="ticket">Ticket Type:</label>
+        <input type="text" id="ticket" required>
+
+        <!-- Input fields for payment details -->
+        <label for="cardNumber">Card Number:</label>
+        <input type="text" id="cardNumber" required>
+
+        <label for="csc">CSC:</label>
+        <input type="text" id="csc" required>
+
+        <label for="postal">Postal Code:</label>
+        <input type="text" id="postal" required>
+
+        <label for="expirationDate">Expiration Date:</label>
+        <input type="text" id="expirationDate" required>
+
+        <!-- Input fields for user details -->
+        <label for="name">Name:</label>
+        <input type="text" id="name" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+
+        <!-- Input fields for order quantity and price -->
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" required>
+
+        <label for="price">Price:</label>
+        <input type="number" id="price" step="0.01" required>
+
+        <button type="submit">Create Order</button>
+    </form>
+
+    <script>
+        const API_ENDPOINT = "/api/v1/orders";
+
+        document.getElementById("orderForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const userToken = localStorage.getItem("userToken");
+            if (!userToken) {
+                console.error("User token not found in local storage.");
+                return;
+            }
+
+            const eventName = document.getElementById("eventName").value;
+            const organizer = document.getElementById("organizer").value;
+            const eventDate = document.getElementById("eventDate").value;
+            const eventAddress = document.getElementById("eventAddress").value;
+            const ticket = document.getElementById("ticket").value;
+            const cardNumber = document.getElementById("cardNumber").value;
+            const csc = document.getElementById("csc").value;
+            const postal = document.getElementById("postal").value;
+            const expirationDate = document.getElementById("expirationDate").value;
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const quantity = document.getElementById("quantity").value;
+            const price = document.getElementById("price").value;
+
+            const orderData = {
+                event: {
+                    name: eventName,
+                    organizer: organizer,
+                    date: eventDate,
+                    address: eventAddress,
+                    ticket: ticket
+                },
+                payment: {
+                    cardNumber: cardNumber,
+                    csc: csc,
+                    postal: postal,
+                    expirationDate: expirationDate
+                },
+                user: {
+                    name: name,
+                    email: email
+                },
+                quantity: quantity,
+                price: price
+            };
+
+            // Send the order data to the server
+            fetch(API_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Order created successfully:", data);
+                // Redirect to a success page or show a success message to the user
+            })
+            .catch(error => {
+                console.error("Error creating order:", error);
+                // Show an error message to the user
+            });
+        });
+    </script>
+</body>
+</html>

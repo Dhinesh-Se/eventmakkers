@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Registration and Login</title>
+</head>
+<body>
+  <h1>User Registration</h1>
+  <form id="registrationForm">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+    <br>
+
+    <label for="dateOfBirth">Date of Birth:</label>
+    <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+    <br>
+
+    <label for="phone">Phone:</label>
+    <input type="text" id="phone" name="phone">
+    <br>
+
+    <label for="address">Address:</label>
+    <input type="text" id="address" name="address">
+    <br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+    <br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+
+    <button id="registerBtn">Register</button>
+  </form>
+
+  <h1>User Login</h1>
+  <form id="loginForm">
+    <label for="loginEmail">Email:</label>
+    <input type="email" id="loginEmail" name="email" required>
+    <br>
+
+    <label for="loginPassword">Password:</label>
+    <input type="password" id="loginPassword" name="password" required>
+    <br>
+
+    <button id="loginBtn">Login</button>
+  </form>
+
+  <script>
+    // Register event listener for the registration form
+    const registrationForm = document.getElementById('registrationForm');
+    registrationForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent default form submission behavior
+
+      // Get form data
+      const formData = new FormData(registrationForm);
+      const formDataObject = Object.fromEntries(formData.entries());
+
+      // Perform asynchronous registration using fetch or any other method
+      try {
+        const response = await fetch('/api/v1/account/signup/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formDataObject),
+        });
+
+        const data = await response.json();
+        console.log(data); // Handle the server response as needed
+      } catch (error) {
+        console.error('Error during registration:', error);
+      }
+    });
+
+    // Register event listener for the login form
+    const loginForm = document.getElementById('loginForm');
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault(); // Prevent default form submission behavior
+
+    // Get form data
+    const formData = new FormData(loginForm);
+    const formDataObject = Object.fromEntries(formData.entries());
+
+    // Perform asynchronous login using fetch or any other method
+    try {
+      const response = await fetch('/api/v1/account/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formDataObject),
+      });
+
+      const data = await response.json();
+
+      console.log(data);
+
+      // Check if the login was successful and received a userToken
+      if (data.userToken) {
+        // Store the userToken in local storage
+        localStorage.setItem('userToken', data.userToken);
+
+        // Redirect to the event page or any other desired page
+        window.location.href = '/event.html';
+      } else {
+        console.error('Login failed:', data.message);
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
+  });
+  </script>
+</body>
+</html>
