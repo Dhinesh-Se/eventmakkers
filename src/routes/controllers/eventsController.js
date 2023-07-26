@@ -1,4 +1,4 @@
-import Event from '../../db/models/Event';
+import Event from '../../db/models/event';
 import Category from '../../db/models/category';
 const ErrorResponse = require('../../utils/errorResponse');
 import Collection from '../../db/models/collection';
