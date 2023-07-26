@@ -10,7 +10,7 @@
     "start:prod": "babel ./src/app.js --out-file ./dist/app.js",
     "seed:events": "nodemon --exec babel-node ./src/db/seeds/eventSeed.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel ./src/app.js --out-file ./dist/app.js"
+    "build": "babel ./src/app.js --out-dir ./public"
   },
   "keywords": [
     "api"
