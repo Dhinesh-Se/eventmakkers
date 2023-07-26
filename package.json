@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
-  "vercel": {
-    "functions": [
-      { "include": "api/**/*.js" }
-    ]
-  },
   "engines": {
     "node": ">=14"
   },
